@@ -15,7 +15,8 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@actions/core": "1.11.1"
+    "@actions/core": "1.11.1",
+    "@anthropic-ai/claude-code": "1.0.80"
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.4",
