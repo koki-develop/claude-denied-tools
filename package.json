@@ -1,0 +1,29 @@
+{
+  "name": "ts-action-template",
+  "main": "src/main.ts",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "20.19.4"
+  },
+  "scripts": {
+    "test": "vitest",
+    "lint": "biome check",
+    "fmt": "bun run lint -- --write --no-errors-on-unmatched",
+    "prebuild": "bun run fmt",
+    "build": "ncc build src/main.ts --out dist --source-map --license licenses.txt",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "@actions/core": "1.11.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.1.4",
+    "@types/node": "20.19.8",
+    "@vercel/ncc": "0.38.3",
+    "husky": "9.1.7",
+    "lint-staged": "16.1.2",
+    "typescript": "5.8.3",
+    "vitest": "3.2.4"
+  }
+}
