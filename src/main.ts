@@ -1,13 +1,26 @@
 import * as core from "@actions/core";
+import { Action } from "./lib/action";
 
 export const main = async () => {
   try {
     const inputs = {
-      message: core.getInput("message"),
+      githubToken: core.getInput("github-token", {
+        required: true,
+        trimWhitespace: true,
+      }),
+      claudeCodeExecutionFile: core.getInput("claude-code-execution-file", {
+        required: true,
+        trimWhitespace: true,
+      }),
     } as const;
 
-    core.info(inputs.message);
-    core.setOutput("message", inputs.message);
+    const action = new Action({
+      githubToken: inputs.githubToken,
+    });
+
+    await action.run({
+      claudeCodeExecutionFile: inputs.claudeCodeExecutionFile,
+    });
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error.message);
