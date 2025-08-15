@@ -1,20 +1,18 @@
-name: Hello World
-description: Greet someone and record the time
+name: Claude Denied Tools Action
+description: Report a list of tools that were denied due to insufficient permissions when used by Claude Code Action.
 
 branding:
-  icon: send
-  color: white
+  icon: shield-off
+  color: red
 
 inputs:
-  message:
-    description: |-
-      The message to echo.
+  github-token:
+    description: GitHub token for API access
     required: false
-    default: "Hello, world!"
-
-outputs:
-  message:
-    description: The message that was echoed.
+    default: ${{ github.token }}
+  claude-code-execution-file:
+    description: The outputs.execution_file from anthropics/claude-code-action
+    required: true
 
 runs:
   using: node20
