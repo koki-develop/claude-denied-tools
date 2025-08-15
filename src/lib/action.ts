@@ -147,16 +147,18 @@ export class Action {
       // Find permission denial errors in user messages
       if (log.type === "user" && Array.isArray(log.message.content)) {
         for (const item of log.message.content) {
-          if (
-            item.type === "tool_result" &&
-            item.is_error &&
-            item.content &&
-            item.content.startsWith("Claude requested permissions to use ") &&
-            item.content.endsWith(", but you haven't granted it yet.")
-          ) {
-            deniedToolUseIds.push(item.tool_use_id);
-            core.debug(`Found denied tool use ID: ${item.tool_use_id}`);
-            core.debug(`Denial message: ${item.content}`);
+          if (item.type === "tool_result" && item.is_error && item.content) {
+            if (
+              (item.content.startsWith(
+                "Claude requested permissions to use ",
+              ) &&
+                item.content.endsWith(", but you haven't granted it yet.")) ||
+              item.content === "This command requires approval"
+            ) {
+              deniedToolUseIds.push(item.tool_use_id);
+              core.debug(`Found denied tool use ID: ${item.tool_use_id}`);
+              core.debug(`Denial message: ${item.content}`);
+            }
           }
         }
       }
