@@ -52054,9 +52054,10 @@ class Action {
             if (log.type === "user" && Array.isArray(log.message.content)) {
                 for (const item of log.message.content) {
                     if (item.type === "tool_result" && item.is_error && item.content) {
-                        if ((item.content.startsWith("Claude requested permissions to use ") &&
-                            item.content.endsWith(", but you haven't granted it yet.")) ||
-                            item.content === "This command requires approval") {
+                        if (item.content.endsWith(" but you haven't granted it yet.") ||
+                            item.content.includes(" requires approval") ||
+                            item.content.includes(" require approval") ||
+                            item.content.endsWith(" has been denied.")) {
                             deniedToolUseIds.push(item.tool_use_id);
                             core.debug(`Found denied tool use ID: ${item.tool_use_id}`);
                             core.debug(`Denial message: ${item.content}`);
