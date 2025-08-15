@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import * as core from "@actions/core";
 import * as github from "@actions/github";
 import type { SDKMessage } from "@anthropic-ai/claude-code";
 import { type Comment, GitHub } from "./github";
@@ -33,39 +34,59 @@ export class Action {
   }
 
   async run(inputs: ActionInputs): Promise<void> {
+    core.debug("Starting Action.run()");
+    core.debug(`Input file: ${inputs.claudeCodeExecutionFile}`);
+
     const issueNumber = this._getIssueNumber();
+    core.debug(`Issue/PR number: ${issueNumber}`);
 
     const logs = this._readClaudeCodeExecutionFile(
       inputs.claudeCodeExecutionFile,
     );
+    core.debug(`Read ${logs.length} SDK messages from execution file`);
+
     const deniedTools = this._extractDeniedTools(logs);
+    core.debug(`Found ${deniedTools.length} denied tool uses`);
+    if (deniedTools.length > 0) {
+      core.debug(
+        `Denied tools: ${JSON.stringify(deniedTools.map((t) => t.name))}`,
+      );
+    }
+
     const report: Report = {
       runId: github.context.runId,
       deniedTools,
     };
+    core.debug(`Created report for run ID: ${github.context.runId}`);
 
     const comment = await this._getLatestComment(issueNumber);
     if (comment) {
+      core.debug(`Found existing comment (ID: ${comment.id})`);
       // Update existing comment with new report
       const reports = this._extractReports(comment);
+      core.debug(`Extracted ${reports.length} existing reports from comment`);
       const rendered = this._renderReports([...reports, report]);
       await this._gh.updateComment({
         commentId: comment.id,
         body: rendered,
       });
+      core.debug(`Updated comment ${comment.id} with new report`);
     } else {
+      core.debug("No existing comment found, creating new one");
       // Create new comment
       const reports = [report];
       await this._gh.createComment({
         issueNumber: issueNumber,
         body: this._renderReports(reports),
       });
+      core.debug(`Created new comment on issue/PR #${issueNumber}`);
     }
   }
 
   _getIssueNumber(): number {
     const eventName = github.context.eventName;
     const payload = github.context.payload;
+    core.debug(`GitHub event: ${eventName}`);
 
     switch (eventName) {
       case "pull_request":
@@ -73,6 +94,9 @@ export class Action {
       case "pull_request_review_comment":
         // For PR events, use payload.pull_request?.number
         if (payload.pull_request?.number) {
+          core.debug(
+            `Found PR number from payload: ${payload.pull_request.number}`,
+          );
           return payload.pull_request.number;
         }
         break;
@@ -82,6 +106,9 @@ export class Action {
         // For Issue or Issue comment events, use payload.issue?.number
         // Note: issue_comment uses the same property for both PR comments and Issue comments
         if (payload.issue?.number) {
+          core.debug(
+            `Found issue number from payload: ${payload.issue.number}`,
+          );
           return payload.issue.number;
         }
         break;
@@ -91,11 +118,15 @@ export class Action {
   }
 
   _readClaudeCodeExecutionFile(filePath: string): SDKMessage[] {
+    core.debug(`Reading Claude Code execution file: ${filePath}`);
     const content = fs.readFileSync(filePath, "utf-8");
-    return JSON.parse(content);
+    const messages = JSON.parse(content);
+    core.debug(`Successfully parsed ${messages.length} messages`);
+    return messages;
   }
 
   _extractDeniedTools(logs: SDKMessage[]): ToolUse[] {
+    core.debug("Extracting denied tools from SDK messages");
     const toolUses: Record<
       string,
       { name: string; input: Record<string, unknown> }
@@ -108,6 +139,7 @@ export class Action {
         for (const item of log.message.content) {
           if (item.type === "tool_use") {
             toolUses[item.id] = { name: item.name, input: item.input };
+            core.debug(`Found tool use: ${item.name} (ID: ${item.id})`);
           }
         }
       }
@@ -123,31 +155,41 @@ export class Action {
             item.content.endsWith(", but you haven't granted it yet.")
           ) {
             deniedToolUseIds.push(item.tool_use_id);
+            core.debug(`Found denied tool use ID: ${item.tool_use_id}`);
+            core.debug(`Denial message: ${item.content}`);
           }
         }
       }
     }
 
-    return deniedToolUseIds.map((id) => toolUses[id]);
+    const deniedTools = deniedToolUseIds.map((id) => toolUses[id]);
+    core.debug(`Total denied tools found: ${deniedTools.length}`);
+    return deniedTools;
   }
 
   async _getLatestComment(issueNumber: number): Promise<Comment | null> {
+    core.debug(`Fetching comments for issue/PR #${issueNumber}`);
     const comments = await this._gh.listIssueComments({
       issueNumber,
     });
+    core.debug(`Found ${comments.length} total comments`);
 
     // Search in reverse order (from newest to oldest)
     for (const comment of comments.reverse()) {
       if (comment.body?.trim().endsWith("<!-- CLAUDE_DENIED_TOOLS -->")) {
+        core.debug(`Found existing bot comment (ID: ${comment.id})`);
         return comment;
       }
     }
 
+    core.debug("No existing bot comment found");
     return null;
   }
 
   _extractReports(comment: Comment): Report[] {
+    core.debug(`Extracting reports from comment ${comment.id}`);
     if (comment.body == null) {
+      core.debug("Comment body is null, returning empty array");
       return [];
     }
 
@@ -166,15 +208,19 @@ export class Action {
     try {
       const reports = JSON.parse(match[1]);
       if (!Array.isArray(reports)) {
+        core.debug("Parsed data is not an array, returning empty array");
         return [];
       }
+      core.debug(`Successfully extracted ${reports.length} reports`);
       return reports;
-    } catch {
+    } catch (error) {
+      core.debug(`Failed to parse reports JSON: ${error}`);
       return [];
     }
   }
 
   _renderReports(reports: Report[]): string {
+    core.debug(`Rendering ${reports.length} reports`);
     const lines: string[] = [];
 
     // Header
@@ -189,8 +235,12 @@ export class Action {
     // Each report as collapsible section
     for (const report of reports) {
       if (report.deniedTools.length === 0) {
+        core.debug(`Skipping report for run ${report.runId} (no denied tools)`);
         continue;
       }
+      core.debug(
+        `Rendering report for run ${report.runId} with ${report.deniedTools.length} denied tools`,
+      );
 
       const owner = github.context.repo.owner;
       const repo = github.context.repo.repo;
