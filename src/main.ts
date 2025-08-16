@@ -20,10 +20,14 @@ export const main = async () => {
       githubToken: inputs.githubToken,
     });
 
-    await action.run({
+    const outputs = await action.run({
       claudeCodeExecutionFile: inputs.claudeCodeExecutionFile,
       stickyComment: inputs.stickyComment,
     });
+
+    core.setOutput("report", outputs.report);
+    core.setOutput("denied-tools", JSON.stringify(outputs.deniedTools));
+    core.summary.addRaw(outputs.report, true).write();
   } catch (error) {
     if (error instanceof Error) {
       core.setFailed(error.message);

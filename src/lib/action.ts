@@ -13,6 +13,11 @@ type ActionInputs = {
   stickyComment: boolean;
 };
 
+type ActionOutputs = {
+  report: string;
+  deniedTools: ToolUse[];
+};
+
 type Report = {
   runId: number;
   deniedTools: ToolUse[];
@@ -34,7 +39,7 @@ export class Action {
     });
   }
 
-  async run(inputs: ActionInputs): Promise<void> {
+  async run(inputs: ActionInputs): Promise<ActionOutputs> {
     const issueNumber = this._getIssueNumber();
     core.info(`Issue/PR number: ${issueNumber}`);
 
@@ -45,14 +50,13 @@ export class Action {
 
     const deniedTools = this._extractDeniedTools(logs);
     core.info(`Found ${deniedTools.length} denied tool uses`);
-    core.setOutput("denied-tools", JSON.stringify(deniedTools));
     if (deniedTools.length > 0) {
       core.debug(
         `Denied tools: ${JSON.stringify(deniedTools.map((t) => t.name))}`,
       );
     } else {
       core.info("No denied tools found");
-      return;
+      return { report: "No denied tools found", deniedTools: [] };
     }
 
     const report: Report = {
@@ -68,14 +72,12 @@ export class Action {
         const reports = this._extractReports(comment);
         core.info(`Extracted ${reports.length} existing reports from comment`);
         const rendered = this._renderReports([report, ...reports]);
-        core.setOutput("report", rendered);
-        core.summary.addRaw(rendered, true).write();
         await this._gh.updateComment({
           commentId: comment.id,
           body: rendered,
         });
         core.info(`Updated comment ${comment.id} with new report`);
-        return;
+        return { report: rendered, deniedTools };
       }
       core.info("No existing comment found, creating new one");
     }
@@ -83,13 +85,12 @@ export class Action {
     // Create new comment
     const reports = [report];
     const rendered = this._renderReports(reports);
-    core.setOutput("report", rendered);
-    core.summary.addRaw(rendered, true).write();
     await this._gh.createComment({
       issueNumber: issueNumber,
       body: rendered,
     });
     core.info(`Created new comment on issue/PR #${issueNumber}`);
+    return { report: rendered, deniedTools };
   }
 
   private _getIssueNumber(): number {
