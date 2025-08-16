@@ -30,7 +30,7 @@ This is a GitHub Action that monitors Claude Code execution logs and reports den
 - Reads GitHub Action inputs: `github-token`, `claude-code-execution-file`, `sticky-comment`, and `skip-comment`
 - Instantiates Action class with configuration
 - Handles errors and sets action failure status
-- Returns outputs: `report` (markdown report) and `denied-tools` (JSON list)
+- Returns outputs: `report` (markdown report), `denied-tools` (JSON list), and `found` (boolean indicating if denied tools were found)
 
 **Action Logic** (`src/lib/action.ts`):
 - Main orchestrator that processes Claude Code execution logs
