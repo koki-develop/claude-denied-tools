@@ -52,6 +52,9 @@ export class Action {
       core.debug(
         `Denied tools: ${JSON.stringify(deniedTools.map((t) => t.name))}`,
       );
+    } else {
+      core.debug("No denied tools found");
+      return;
     }
 
     const report: Report = {
