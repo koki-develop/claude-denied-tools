@@ -51963,57 +51963,60 @@ class Action {
         });
     }
     async run(inputs) {
-        core.debug("Starting Action.run()");
-        core.debug(`Input file: ${inputs.claudeCodeExecutionFile}`);
         const issueNumber = this._getIssueNumber();
-        core.debug(`Issue/PR number: ${issueNumber}`);
+        core.info(`Issue/PR number: ${issueNumber}`);
         const logs = this._readClaudeCodeExecutionFile(inputs.claudeCodeExecutionFile);
-        core.debug(`Read ${logs.length} SDK messages from execution file`);
+        core.info(`Read ${logs.length} SDK messages from execution file`);
         const deniedTools = this._extractDeniedTools(logs);
-        core.debug(`Found ${deniedTools.length} denied tool uses`);
+        core.info(`Found ${deniedTools.length} denied tool uses`);
         if (deniedTools.length > 0) {
             core.debug(`Denied tools: ${JSON.stringify(deniedTools.map((t) => t.name))}`);
+        }
+        else {
+            core.info("No denied tools found");
+            return;
         }
         const report = {
             runId: github.context.runId,
             deniedTools,
         };
-        core.debug(`Created report for run ID: ${github.context.runId}`);
-        const comment = await this._getLatestComment(issueNumber);
-        if (comment) {
-            core.debug(`Found existing comment (ID: ${comment.id})`);
-            // Update existing comment with new report
-            const reports = this._extractReports(comment);
-            core.debug(`Extracted ${reports.length} existing reports from comment`);
-            const rendered = this._renderReports([...reports, report]);
-            await this._gh.updateComment({
-                commentId: comment.id,
-                body: rendered,
-            });
-            core.debug(`Updated comment ${comment.id} with new report`);
+        if (inputs.stickyComment) {
+            const comment = await this._getLatestComment(issueNumber);
+            if (comment) {
+                core.info(`Found existing comment (ID: ${comment.id})`);
+                // Update existing comment with new report
+                const reports = this._extractReports(comment);
+                core.info(`Extracted ${reports.length} existing reports from comment`);
+                const rendered = this._renderReports([report, ...reports]);
+                core.summary.addRaw(rendered, true);
+                await this._gh.updateComment({
+                    commentId: comment.id,
+                    body: rendered,
+                });
+                core.info(`Updated comment ${comment.id} with new report`);
+                return;
+            }
+            core.info("No existing comment found, creating new one");
         }
-        else {
-            core.debug("No existing comment found, creating new one");
-            // Create new comment
-            const reports = [report];
-            await this._gh.createComment({
-                issueNumber: issueNumber,
-                body: this._renderReports(reports),
-            });
-            core.debug(`Created new comment on issue/PR #${issueNumber}`);
-        }
+        // Create new comment
+        const reports = [report];
+        const rendered = this._renderReports(reports);
+        core.summary.addRaw(rendered, true);
+        await this._gh.createComment({
+            issueNumber: issueNumber,
+            body: rendered,
+        });
+        core.info(`Created new comment on issue/PR #${issueNumber}`);
     }
     _getIssueNumber() {
         const eventName = github.context.eventName;
         const payload = github.context.payload;
-        core.debug(`GitHub event: ${eventName}`);
         switch (eventName) {
             case "pull_request":
             case "pull_request_review":
             case "pull_request_review_comment":
                 // For PR events, use payload.pull_request?.number
                 if (payload.pull_request?.number) {
-                    core.debug(`Found PR number from payload: ${payload.pull_request.number}`);
                     return payload.pull_request.number;
                 }
                 break;
@@ -52022,7 +52025,6 @@ class Action {
                 // For Issue or Issue comment events, use payload.issue?.number
                 // Note: issue_comment uses the same property for both PR comments and Issue comments
                 if (payload.issue?.number) {
-                    core.debug(`Found issue number from payload: ${payload.issue.number}`);
                     return payload.issue.number;
                 }
                 break;
@@ -52030,14 +52032,10 @@ class Action {
         throw new Error(`Unable to get PR/Issue number from event: ${eventName}`);
     }
     _readClaudeCodeExecutionFile(filePath) {
-        core.debug(`Reading Claude Code execution file: ${filePath}`);
         const content = external_node_fs_default().readFileSync(filePath, "utf-8");
-        const messages = JSON.parse(content);
-        core.debug(`Successfully parsed ${messages.length} messages`);
-        return messages;
+        return JSON.parse(content);
     }
     _extractDeniedTools(logs) {
-        core.debug("Extracting denied tools from SDK messages");
         const toolUses = {};
         const deniedToolUseIds = [];
         for (const log of logs) {
@@ -52046,7 +52044,6 @@ class Action {
                 for (const item of log.message.content) {
                     if (item.type === "tool_use") {
                         toolUses[item.id] = { name: item.name, input: item.input };
-                        core.debug(`Found tool use: ${item.name} (ID: ${item.id})`);
                     }
                 }
             }
@@ -52059,37 +52056,27 @@ class Action {
                             item.content.includes(" require approval") ||
                             item.content.endsWith(" has been denied.")) {
                             deniedToolUseIds.push(item.tool_use_id);
-                            core.debug(`Found denied tool use ID: ${item.tool_use_id}`);
-                            core.debug(`Denial message: ${item.content}`);
                         }
                     }
                 }
             }
         }
-        const deniedTools = deniedToolUseIds.map((id) => toolUses[id]);
-        core.debug(`Total denied tools found: ${deniedTools.length}`);
-        return deniedTools;
+        return deniedToolUseIds.map((id) => toolUses[id]);
     }
     async _getLatestComment(issueNumber) {
-        core.debug(`Fetching comments for issue/PR #${issueNumber}`);
         const comments = await this._gh.listIssueComments({
             issueNumber,
         });
-        core.debug(`Found ${comments.length} total comments`);
         // Search in reverse order (from newest to oldest)
         for (const comment of comments.reverse()) {
             if (comment.body?.trim().endsWith("<!-- CLAUDE_DENIED_TOOLS -->")) {
-                core.debug(`Found existing bot comment (ID: ${comment.id})`);
                 return comment;
             }
         }
-        core.debug("No existing bot comment found");
         return null;
     }
     _extractReports(comment) {
-        core.debug(`Extracting reports from comment ${comment.id}`);
         if (comment.body == null) {
-            core.debug("Comment body is null, returning empty array");
             return [];
         }
         const lines = comment.body.trim().split("\n");
@@ -52105,40 +52092,40 @@ class Action {
         try {
             const reports = JSON.parse(match[1]);
             if (!Array.isArray(reports)) {
-                core.debug("Parsed data is not an array, returning empty array");
                 return [];
             }
-            core.debug(`Successfully extracted ${reports.length} reports`);
             return reports;
         }
-        catch (error) {
-            core.debug(`Failed to parse reports JSON: ${error}`);
+        catch {
             return [];
         }
     }
     _renderReports(reports) {
-        core.debug(`Rendering ${reports.length} reports`);
         const lines = [];
         // Header
         lines.push("## 🚫 Permission Denied Tool Executions");
         lines.push("");
         lines.push("The following tool executions that Claude Code attempted were blocked due to insufficient permissions.");
         lines.push("Consider adding them to `allowed_tools` if needed.");
-        lines.push("");
         // Each report as collapsible section
         for (const report of reports) {
             if (report.deniedTools.length === 0) {
-                core.debug(`Skipping report for run ${report.runId} (no denied tools)`);
                 continue;
             }
-            core.debug(`Rendering report for run ${report.runId} with ${report.deniedTools.length} denied tools`);
             const owner = github.context.repo.owner;
             const repo = github.context.repo.repo;
             const runUrl = `https://github.com/${owner}/${repo}/actions/runs/${report.runId}`;
             const toolCount = report.deniedTools.length;
             const toolText = toolCount === 1 ? "1 tool" : `${toolCount} tools`;
-            lines.push("<details>");
-            lines.push(`<summary>Run <a href="${runUrl}">#${report.runId}</a> - ${toolText} denied</summary>`);
+            const summary = `Run <a href="${runUrl}">#${report.runId}</a> - ${toolText} denied`;
+            lines.push("");
+            if (reports.length > 1) {
+                lines.push("<details>");
+                lines.push(`<summary>${summary}</summary>`);
+            }
+            else {
+                lines.push(summary);
+            }
             lines.push("");
             lines.push("| Tool | Input |");
             lines.push("| --- | --- |");
@@ -52150,11 +52137,13 @@ class Action {
                     .replace(/\|/g, "\\|");
                 lines.push(`| \`${tool.name}\` | \`${escapedInput}\` |`);
             }
-            lines.push("");
-            lines.push("</details>");
-            lines.push("");
+            if (reports.length > 1) {
+                lines.push("");
+                lines.push("</details>");
+            }
         }
         // Metadata for future parsing
+        lines.push("");
         lines.push(`<!-- ${JSON.stringify(reports)} -->`);
         lines.push("<!-- CLAUDE_DENIED_TOOLS -->");
         return lines.join("\n");
@@ -52187,12 +52176,14 @@ const main = async () => {
                 required: true,
                 trimWhitespace: true,
             }),
+            stickyComment: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("sticky-comment", { trimWhitespace: true }) === "true",
         };
         const action = new _lib_action__WEBPACK_IMPORTED_MODULE_1__/* .Action */ .r({
             githubToken: inputs.githubToken,
         });
         await action.run({
             claudeCodeExecutionFile: inputs.claudeCodeExecutionFile,
+            stickyComment: inputs.stickyComment,
         });
     }
     catch (error) {
