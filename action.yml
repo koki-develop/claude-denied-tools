@@ -13,6 +13,10 @@ inputs:
   claude-code-execution-file:
     description: The outputs.execution_file from anthropics/claude-code-action
     required: true
+  sticky-comment:
+    description: If true, updates existing comment instead of creating new ones for each run
+    required: false
+    default: "false"
 
 runs:
   using: node20

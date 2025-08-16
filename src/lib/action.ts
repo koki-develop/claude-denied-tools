@@ -10,6 +10,7 @@ type ActionConfig = {
 
 type ActionInputs = {
   claudeCodeExecutionFile: string;
+  stickyComment: boolean;
 };
 
 type Report = {
@@ -59,28 +60,31 @@ export class Action {
     };
     core.debug(`Created report for run ID: ${github.context.runId}`);
 
-    const comment = await this._getLatestComment(issueNumber);
-    if (comment) {
-      core.debug(`Found existing comment (ID: ${comment.id})`);
-      // Update existing comment with new report
-      const reports = this._extractReports(comment);
-      core.debug(`Extracted ${reports.length} existing reports from comment`);
-      const rendered = this._renderReports([...reports, report]);
-      await this._gh.updateComment({
-        commentId: comment.id,
-        body: rendered,
-      });
-      core.debug(`Updated comment ${comment.id} with new report`);
-    } else {
+    if (inputs.stickyComment) {
+      const comment = await this._getLatestComment(issueNumber);
+      if (comment) {
+        core.debug(`Found existing comment (ID: ${comment.id})`);
+        // Update existing comment with new report
+        const reports = this._extractReports(comment);
+        core.debug(`Extracted ${reports.length} existing reports from comment`);
+        const rendered = this._renderReports([report, ...reports]);
+        await this._gh.updateComment({
+          commentId: comment.id,
+          body: rendered,
+        });
+        core.debug(`Updated comment ${comment.id} with new report`);
+        return;
+      }
       core.debug("No existing comment found, creating new one");
-      // Create new comment
-      const reports = [report];
-      await this._gh.createComment({
-        issueNumber: issueNumber,
-        body: this._renderReports(reports),
-      });
-      core.debug(`Created new comment on issue/PR #${issueNumber}`);
     }
+
+    // Create new comment
+    const reports = [report];
+    await this._gh.createComment({
+      issueNumber: issueNumber,
+      body: this._renderReports(reports),
+    });
+    core.debug(`Created new comment on issue/PR #${issueNumber}`);
   }
 
   private _getIssueNumber(): number {
