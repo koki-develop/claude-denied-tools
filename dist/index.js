@@ -51953,6 +51953,14 @@ class GitHub {
 
 
 
+function commentFooter(reports) {
+    const lines = [
+        "",
+        `<!-- ${JSON.stringify(reports)} -->`,
+        "<!-- CLAUDE_DENIED_TOOLS -->",
+    ];
+    return lines.join("\n");
+}
 class Action {
     _gh;
     constructor(config) {
@@ -51995,7 +52003,7 @@ class Action {
                 const rendered = this._renderReports([report, ...reports]);
                 await this._gh.updateComment({
                     commentId: comment.id,
-                    body: rendered,
+                    body: rendered + commentFooter([report, ...reports]),
                 });
                 core.info(`Updated comment ${comment.id} with new report`);
                 return { report: rendered, deniedTools };
@@ -52006,7 +52014,7 @@ class Action {
         const rendered = this._renderReports([report]);
         await this._gh.createComment({
             issueNumber: issueNumber,
-            body: rendered,
+            body: rendered + commentFooter([report]),
         });
         core.info(`Created new comment on issue/PR #${issueNumber}`);
         return { report: rendered, deniedTools };
@@ -52144,10 +52152,6 @@ class Action {
                 lines.push("</details>");
             }
         }
-        // Metadata for future parsing
-        lines.push("");
-        lines.push(`<!-- ${JSON.stringify(reports)} -->`);
-        lines.push("<!-- CLAUDE_DENIED_TOOLS -->");
         return lines.join("\n");
     }
 }
