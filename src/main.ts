@@ -1,5 +1,5 @@
 import * as core from "@actions/core";
-import { Action } from "./lib/action";
+import { runAction } from "./lib/action";
 
 export const main = async () => {
   try {
@@ -18,15 +18,16 @@ export const main = async () => {
         core.getInput("skip-comment", { trimWhitespace: true }) === "true",
     } as const;
 
-    const action = new Action({
-      githubToken: inputs.githubToken,
-    });
-
-    const outputs = await action.run({
-      claudeCodeExecutionFile: inputs.claudeCodeExecutionFile,
-      stickyComment: inputs.stickyComment,
-      skipComment: inputs.skipComment,
-    });
+    const outputs = await runAction(
+      {
+        githubToken: inputs.githubToken,
+      },
+      {
+        claudeCodeExecutionFile: inputs.claudeCodeExecutionFile,
+        stickyComment: inputs.stickyComment,
+        skipComment: inputs.skipComment,
+      },
+    );
 
     core.setOutput("report", outputs.report);
     core.setOutput("denied-tools", JSON.stringify(outputs.deniedTools));
