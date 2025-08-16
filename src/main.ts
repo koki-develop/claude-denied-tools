@@ -12,6 +12,8 @@ export const main = async () => {
         required: true,
         trimWhitespace: true,
       }),
+      stickyComment:
+        core.getInput("sticky-comment", { trimWhitespace: true }) === "true",
     } as const;
 
     const action = new Action({
@@ -20,6 +22,7 @@ export const main = async () => {
 
     await action.run({
       claudeCodeExecutionFile: inputs.claudeCodeExecutionFile,
+      stickyComment: inputs.stickyComment,
     });
   } catch (error) {
     if (error instanceof Error) {
