@@ -51956,6 +51956,7 @@ class GitHub {
 function commentFooter(reports) {
     const lines = [
         "",
+        "",
         `<!-- ${JSON.stringify(reports)} -->`,
         "<!-- CLAUDE_DENIED_TOOLS -->",
     ];

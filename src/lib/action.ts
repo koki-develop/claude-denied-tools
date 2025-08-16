@@ -32,6 +32,7 @@ type ToolUse = {
 function commentFooter(reports: Report[]) {
   const lines = [
     "",
+    "",
     `<!-- ${JSON.stringify(reports)} -->`,
     "<!-- CLAUDE_DENIED_TOOLS -->",
   ];
