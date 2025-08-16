@@ -51974,12 +51974,17 @@ class Action {
         }
         else {
             core.info("No denied tools found");
-            return;
+            return { report: "No denied tools found", deniedTools: [] };
         }
         const report = {
             runId: github.context.runId,
             deniedTools,
         };
+        // Skip comment creation if requested
+        if (inputs.skipComment) {
+            core.info("Skipping comment creation");
+            return { report: this._renderReports([report]), deniedTools };
+        }
         if (inputs.stickyComment) {
             const comment = await this._getLatestComment(issueNumber);
             if (comment) {
@@ -51988,25 +51993,23 @@ class Action {
                 const reports = this._extractReports(comment);
                 core.info(`Extracted ${reports.length} existing reports from comment`);
                 const rendered = this._renderReports([report, ...reports]);
-                core.summary.addRaw(rendered, true).write();
                 await this._gh.updateComment({
                     commentId: comment.id,
                     body: rendered,
                 });
                 core.info(`Updated comment ${comment.id} with new report`);
-                return;
+                return { report: rendered, deniedTools };
             }
             core.info("No existing comment found, creating new one");
         }
         // Create new comment
-        const reports = [report];
-        const rendered = this._renderReports(reports);
-        core.summary.addRaw(rendered, true).write();
+        const rendered = this._renderReports([report]);
         await this._gh.createComment({
             issueNumber: issueNumber,
             body: rendered,
         });
         core.info(`Created new comment on issue/PR #${issueNumber}`);
+        return { report: rendered, deniedTools };
     }
     _getIssueNumber() {
         const eventName = github.context.eventName;
@@ -52176,14 +52179,19 @@ const main = async () => {
                 trimWhitespace: true,
             }),
             stickyComment: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("sticky-comment", { trimWhitespace: true }) === "true",
+            skipComment: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("skip-comment", { trimWhitespace: true }) === "true",
         };
         const action = new _lib_action__WEBPACK_IMPORTED_MODULE_1__/* .Action */ .r({
             githubToken: inputs.githubToken,
         });
-        await action.run({
+        const outputs = await action.run({
             claudeCodeExecutionFile: inputs.claudeCodeExecutionFile,
             stickyComment: inputs.stickyComment,
+            skipComment: inputs.skipComment,
         });
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput("report", outputs.report);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput("denied-tools", JSON.stringify(outputs.deniedTools));
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.summary.addRaw(outputs.report, true).write();
     }
     catch (error) {
         if (error instanceof Error) {

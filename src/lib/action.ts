@@ -11,6 +11,7 @@ type ActionConfig = {
 type ActionInputs = {
   claudeCodeExecutionFile: string;
   stickyComment: boolean;
+  skipComment: boolean;
 };
 
 type ActionOutputs = {
@@ -64,6 +65,12 @@ export class Action {
       deniedTools,
     };
 
+    // Skip comment creation if requested
+    if (inputs.skipComment) {
+      core.info("Skipping comment creation");
+      return { report: this._renderReports([report]), deniedTools };
+    }
+
     if (inputs.stickyComment) {
       const comment = await this._getLatestComment(issueNumber);
       if (comment) {
@@ -83,8 +90,7 @@ export class Action {
     }
 
     // Create new comment
-    const reports = [report];
-    const rendered = this._renderReports(reports);
+    const rendered = this._renderReports([report]);
     await this._gh.createComment({
       issueNumber: issueNumber,
       body: rendered,
