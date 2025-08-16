@@ -24,6 +24,15 @@ It automatically posts a detailed report to your PR or Issue, helping you unders
     claude-code-execution-file: ${{ steps.claude.outputs.execution_file }}
 ```
 
+Required Permissions:
+
+```yaml
+permissions:
+  pull-requests: write # Required to post comments on PRs
+  issues: write # Required to post comments on Issues
+  # ...
+```
+
 ## Inputs
 
 | Name | Description | Required | Default |
