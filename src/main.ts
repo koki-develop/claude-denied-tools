@@ -31,6 +31,7 @@ export const main = async () => {
 
     core.setOutput("report", outputs.report);
     core.setOutput("denied-tools", JSON.stringify(outputs.deniedTools));
+    core.setOutput("found", outputs.found.toString());
     core.summary.addRaw(outputs.report, true).write();
   } catch (error) {
     if (error instanceof Error) {

@@ -18,6 +18,7 @@ type ActionInputs = {
 export type ActionOutputs = {
   report: string;
   deniedTools: ToolUse[];
+  found: boolean;
 };
 
 type Report = {
@@ -54,7 +55,11 @@ export async function runAction(
     );
   } else {
     core.info("No denied tools found");
-    return { report: "No denied tools found", deniedTools: [] };
+    return {
+      report: "No denied tools found",
+      deniedTools: [],
+      found: false,
+    };
   }
 
   const report: Report = {
@@ -65,7 +70,11 @@ export async function runAction(
   // Skip comment creation if requested
   if (inputs.skipComment) {
     core.info("Skipping comment creation");
-    return { report: _renderReports(github.context, [report]), deniedTools };
+    return {
+      report: _renderReports(github.context, [report]),
+      deniedTools,
+      found: true,
+    };
   }
 
   if (inputs.stickyComment) {
@@ -82,7 +91,7 @@ export async function runAction(
         body: rendered + _commentFooter([report, ...reports]),
       });
       core.info(`Updated comment ${comment.id} with new report`);
-      return { report: rendered, deniedTools };
+      return { report: rendered, deniedTools, found: true };
     }
     core.info("No existing comment found, creating new one");
   }
@@ -94,7 +103,7 @@ export async function runAction(
     body: rendered + _commentFooter([report]),
   });
   core.info(`Created new comment on issue/PR #${issueNumber}`);
-  return { report: rendered, deniedTools };
+  return { report: rendered, deniedTools, found: true };
 }
 
 export function _commentFooter(reports: Report[]) {

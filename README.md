@@ -48,6 +48,7 @@ permissions:
 | --- | --- |
 | `report` | Markdown-formatted report of denied tool executions |
 | `denied-tools` | List of denied tools (JSON format) |
+| `found` | Whether any denied tools were found (boolean) |
 
 ## License
 

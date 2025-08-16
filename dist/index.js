@@ -51972,7 +51972,11 @@ async function runAction(config, inputs) {
     }
     else {
         core.info("No denied tools found");
-        return { report: "No denied tools found", deniedTools: [] };
+        return {
+            report: "No denied tools found",
+            deniedTools: [],
+            found: false,
+        };
     }
     const report = {
         runId: github.context.runId,
@@ -51981,7 +51985,11 @@ async function runAction(config, inputs) {
     // Skip comment creation if requested
     if (inputs.skipComment) {
         core.info("Skipping comment creation");
-        return { report: _renderReports(github.context, [report]), deniedTools };
+        return {
+            report: _renderReports(github.context, [report]),
+            deniedTools,
+            found: true,
+        };
     }
     if (inputs.stickyComment) {
         const comments = await gh.listIssueComments({ issueNumber });
@@ -51997,7 +52005,7 @@ async function runAction(config, inputs) {
                 body: rendered + _commentFooter([report, ...reports]),
             });
             core.info(`Updated comment ${comment.id} with new report`);
-            return { report: rendered, deniedTools };
+            return { report: rendered, deniedTools, found: true };
         }
         core.info("No existing comment found, creating new one");
     }
@@ -52008,7 +52016,7 @@ async function runAction(config, inputs) {
         body: rendered + _commentFooter([report]),
     });
     core.info(`Created new comment on issue/PR #${issueNumber}`);
-    return { report: rendered, deniedTools };
+    return { report: rendered, deniedTools, found: true };
 }
 function _commentFooter(reports) {
     const lines = [
@@ -52183,6 +52191,7 @@ const main = async () => {
         });
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput("report", outputs.report);
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput("denied-tools", JSON.stringify(outputs.deniedTools));
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput("found", outputs.found.toString());
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.summary.addRaw(outputs.report, true).write();
     }
     catch (error) {

@@ -27,6 +27,8 @@ outputs:
     description: Markdown-formatted report of denied tool executions
   denied-tools:
     description: List of denied tools (JSON)
+  found:
+    description: Whether any denied tools were found (boolean)
 
 runs:
   using: node20
