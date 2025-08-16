@@ -220,11 +220,11 @@ export class Action {
         continue;
       }
 
-      const owner = github.context.repo.owner;
-      const repo = github.context.repo.repo;
-      const runUrl = `https://github.com/${owner}/${repo}/actions/runs/${report.runId}`;
-      const toolCount = report.deniedTools.length;
-      const toolText = toolCount === 1 ? "1 tool" : `${toolCount} tools`;
+      const runUrl = `https://github.com/${github.context.repo.owner}/${github.context.repo.repo}/actions/runs/${report.runId}`;
+      const toolText =
+        report.deniedTools.length === 1
+          ? "1 tool"
+          : `${report.deniedTools.length} tools`;
       const summary = `Run <a href="${runUrl}">#${report.runId}</a> - ${toolText} denied`;
 
       lines.push("");
