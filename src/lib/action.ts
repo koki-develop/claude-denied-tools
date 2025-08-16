@@ -83,7 +83,7 @@ export class Action {
     }
   }
 
-  _getIssueNumber(): number {
+  private _getIssueNumber(): number {
     const eventName = github.context.eventName;
     const payload = github.context.payload;
     core.debug(`GitHub event: ${eventName}`);
@@ -117,7 +117,7 @@ export class Action {
     throw new Error(`Unable to get PR/Issue number from event: ${eventName}`);
   }
 
-  _readClaudeCodeExecutionFile(filePath: string): SDKMessage[] {
+  private _readClaudeCodeExecutionFile(filePath: string): SDKMessage[] {
     core.debug(`Reading Claude Code execution file: ${filePath}`);
     const content = fs.readFileSync(filePath, "utf-8");
     const messages = JSON.parse(content);
@@ -125,7 +125,7 @@ export class Action {
     return messages;
   }
 
-  _extractDeniedTools(logs: SDKMessage[]): ToolUse[] {
+  private _extractDeniedTools(logs: SDKMessage[]): ToolUse[] {
     core.debug("Extracting denied tools from SDK messages");
     const toolUses: Record<
       string,
@@ -168,7 +168,9 @@ export class Action {
     return deniedTools;
   }
 
-  async _getLatestComment(issueNumber: number): Promise<Comment | null> {
+  private async _getLatestComment(
+    issueNumber: number,
+  ): Promise<Comment | null> {
     core.debug(`Fetching comments for issue/PR #${issueNumber}`);
     const comments = await this._gh.listIssueComments({
       issueNumber,
@@ -187,7 +189,7 @@ export class Action {
     return null;
   }
 
-  _extractReports(comment: Comment): Report[] {
+  private _extractReports(comment: Comment): Report[] {
     core.debug(`Extracting reports from comment ${comment.id}`);
     if (comment.body == null) {
       core.debug("Comment body is null, returning empty array");
@@ -220,7 +222,7 @@ export class Action {
     }
   }
 
-  _renderReports(reports: Report[]): string {
+  private _renderReports(reports: Report[]): string {
     core.debug(`Rendering ${reports.length} reports`);
     const lines: string[] = [];
 
