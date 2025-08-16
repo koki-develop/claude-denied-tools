@@ -69,7 +69,8 @@ export async function runAction(
   }
 
   if (inputs.stickyComment) {
-    const comment = await getLatestComment(gh, issueNumber);
+    const comments = await gh.listIssueComments({ issueNumber });
+    const comment = await getLatestComment(comments);
     if (comment) {
       core.info(`Found existing comment (ID: ${comment.id})`);
       // Update existing comment with new report
@@ -173,14 +174,7 @@ function extractDeniedTools(logs: SDKMessage[]): ToolUse[] {
   return deniedToolUseIds.map((id) => toolUses[id]);
 }
 
-async function getLatestComment(
-  gh: GitHub,
-  issueNumber: number,
-): Promise<Comment | null> {
-  const comments = await gh.listIssueComments({
-    issueNumber,
-  });
-
+async function getLatestComment(comments: Comment[]): Promise<Comment | null> {
   // Search in reverse order (from newest to oldest)
   for (const comment of comments.reverse()) {
     if (comment.body?.trim().endsWith("<!-- CLAUDE_DENIED_TOOLS -->")) {
