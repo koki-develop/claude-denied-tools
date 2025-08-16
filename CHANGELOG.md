@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/koki-develop/claude-denied-tools/compare/v1.0.0...v1.1.0) (2025-08-16)
+
+
+### Features
+
+* add found output to indicate if denied tools were detected ([45ba000](https://github.com/koki-develop/claude-denied-tools/commit/45ba0004c2256dd71adfb619967d9976e02bd954))
+
 ## [1.0.0](https://github.com/koki-develop/claude-denied-tools/compare/v0.0.1...v1.0.0) (2025-08-16)
 
 
