@@ -51901,8 +51901,10 @@ function wrappy (fn, cb) {
 
 // EXPORTS
 __nccwpck_require__.d(__webpack_exports__, {
-  C: () => (/* binding */ runAction)
+  Cs: () => (/* binding */ runAction)
 });
+
+// UNUSED EXPORTS: _commentFooter, _extractDeniedTools, _extractReports, _getIssueNumber, _getLatestComment, _readClaudeCodeExecutionFile, _renderReports
 
 ;// CONCATENATED MODULE: external "node:fs"
 const external_node_fs_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:fs");
@@ -51959,11 +51961,11 @@ async function runAction(config, inputs) {
         owner: github.context.repo.owner,
         repo: github.context.repo.repo,
     });
-    const issueNumber = getIssueNumber(github.context);
+    const issueNumber = _getIssueNumber(github.context);
     core.info(`Issue/PR number: ${issueNumber}`);
-    const logs = readClaudeCodeExecutionFile(inputs.claudeCodeExecutionFile);
+    const logs = _readClaudeCodeExecutionFile(inputs.claudeCodeExecutionFile);
     core.info(`Read ${logs.length} SDK messages from execution file`);
-    const deniedTools = extractDeniedTools(logs);
+    const deniedTools = _extractDeniedTools(logs);
     core.info(`Found ${deniedTools.length} denied tool uses`);
     if (deniedTools.length > 0) {
         core.debug(`Denied tools: ${JSON.stringify(deniedTools.map((t) => t.name))}`);
@@ -51979,20 +51981,20 @@ async function runAction(config, inputs) {
     // Skip comment creation if requested
     if (inputs.skipComment) {
         core.info("Skipping comment creation");
-        return { report: renderReports([report]), deniedTools };
+        return { report: _renderReports([report]), deniedTools };
     }
     if (inputs.stickyComment) {
         const comments = await gh.listIssueComments({ issueNumber });
-        const comment = await getLatestComment(comments);
+        const comment = await _getLatestComment(comments);
         if (comment) {
             core.info(`Found existing comment (ID: ${comment.id})`);
             // Update existing comment with new report
-            const reports = extractReports(comment);
+            const reports = _extractReports(comment);
             core.info(`Extracted ${reports.length} existing reports from comment`);
-            const rendered = renderReports([report, ...reports]);
+            const rendered = _renderReports([report, ...reports]);
             await gh.updateComment({
                 commentId: comment.id,
-                body: rendered + commentFooter([report, ...reports]),
+                body: rendered + _commentFooter([report, ...reports]),
             });
             core.info(`Updated comment ${comment.id} with new report`);
             return { report: rendered, deniedTools };
@@ -52000,15 +52002,15 @@ async function runAction(config, inputs) {
         core.info("No existing comment found, creating new one");
     }
     // Create new comment
-    const rendered = renderReports([report]);
+    const rendered = _renderReports([report]);
     await gh.createComment({
         issueNumber: issueNumber,
-        body: rendered + commentFooter([report]),
+        body: rendered + _commentFooter([report]),
     });
     core.info(`Created new comment on issue/PR #${issueNumber}`);
     return { report: rendered, deniedTools };
 }
-function commentFooter(reports) {
+function _commentFooter(reports) {
     const lines = [
         "",
         "",
@@ -52017,7 +52019,7 @@ function commentFooter(reports) {
     ];
     return lines.join("\n");
 }
-function getIssueNumber(context) {
+function _getIssueNumber(context) {
     switch (context.eventName) {
         case "pull_request":
         case "pull_request_review":
@@ -52038,11 +52040,11 @@ function getIssueNumber(context) {
     }
     throw new Error(`Unable to get PR/Issue number from event: ${context.eventName}`);
 }
-function readClaudeCodeExecutionFile(filePath) {
+function _readClaudeCodeExecutionFile(filePath) {
     const content = external_node_fs_default().readFileSync(filePath, "utf-8");
     return JSON.parse(content);
 }
-function extractDeniedTools(logs) {
+function _extractDeniedTools(logs) {
     const toolUses = {};
     const deniedToolUseIds = [];
     for (const log of logs) {
@@ -52070,7 +52072,7 @@ function extractDeniedTools(logs) {
     }
     return deniedToolUseIds.map((id) => toolUses[id]);
 }
-async function getLatestComment(comments) {
+async function _getLatestComment(comments) {
     // Search in reverse order (from newest to oldest)
     for (const comment of comments.reverse()) {
         if (comment.body?.trim().endsWith("<!-- CLAUDE_DENIED_TOOLS -->")) {
@@ -52079,7 +52081,7 @@ async function getLatestComment(comments) {
     }
     return null;
 }
-function extractReports(comment) {
+function _extractReports(comment) {
     if (comment.body == null) {
         return [];
     }
@@ -52104,7 +52106,7 @@ function extractReports(comment) {
         return [];
     }
 }
-function renderReports(reports) {
+function _renderReports(reports) {
     const lines = [];
     // Header
     lines.push("## 🚫 Permission Denied Tool Executions");
@@ -52175,7 +52177,7 @@ const main = async () => {
             stickyComment: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("sticky-comment", { trimWhitespace: true }) === "true",
             skipComment: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput("skip-comment", { trimWhitespace: true }) === "true",
         };
-        const outputs = await (0,_lib_action__WEBPACK_IMPORTED_MODULE_1__/* .runAction */ .C)({
+        const outputs = await (0,_lib_action__WEBPACK_IMPORTED_MODULE_1__/* .runAction */ .Cs)({
             githubToken: inputs.githubToken,
         }, {
             claudeCodeExecutionFile: inputs.claudeCodeExecutionFile,
