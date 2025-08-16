@@ -27,3 +27,8 @@ jobs:
       - uses: koki-develop/claude-renovate-review@11362b12a07eae38f2fe2c53890c52a7e825d64c # v1.0.5
         with:
           claude-code-oauth-token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          allowed-tools: |
+            WebSearch
+            WebFetch(domain:github.com)
+            WebFetch(domain:raw.githubusercontent.com)
+            WebFetch(domain:devblogs.microsoft.com)
