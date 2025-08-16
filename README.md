@@ -4,7 +4,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/koki-develop/claude-denied-tools/ci.yml?branch=main&logo=github&style=flat&label=ci)](https://github.com/koki-develop/claude-denied-tools/actions/workflows/ci.yml)
 [![Build](https://img.shields.io/github/actions/workflow/status/koki-develop/claude-denied-tools/build.yml?branch=main&logo=github&style=flat&label=build)](https://github.com/koki-develop/claude-denied-tools/actions/workflows/build.yml)
 
-Report a list of tools that were denied due to insufficient permissions when used by Claude Code Action.
+Report a list of tools that were denied due to insufficient permissions when used by [Claude Code Action](https://github.com/anthropics/claude-code-action).
 
 ![screenshot](./screenshot.png)
 
