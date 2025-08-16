@@ -45,6 +45,7 @@ export class Action {
 
     const deniedTools = this._extractDeniedTools(logs);
     core.info(`Found ${deniedTools.length} denied tool uses`);
+    core.setOutput("denied-tools", JSON.stringify(deniedTools));
     if (deniedTools.length > 0) {
       core.debug(
         `Denied tools: ${JSON.stringify(deniedTools.map((t) => t.name))}`,
@@ -67,6 +68,7 @@ export class Action {
         const reports = this._extractReports(comment);
         core.info(`Extracted ${reports.length} existing reports from comment`);
         const rendered = this._renderReports([report, ...reports]);
+        core.setOutput("report", rendered);
         core.summary.addRaw(rendered, true).write();
         await this._gh.updateComment({
           commentId: comment.id,
@@ -81,6 +83,7 @@ export class Action {
     // Create new comment
     const reports = [report];
     const rendered = this._renderReports(reports);
+    core.setOutput("report", rendered);
     core.summary.addRaw(rendered, true).write();
     await this._gh.createComment({
       issueNumber: issueNumber,
