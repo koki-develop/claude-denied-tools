@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `bun install` - Install dependencies
 - `bun run test` - Run tests with Vitest
 - `bun run lint` - Check code with Biome linter
-- `bun run fmt` - Format code with Biome (auto-fix)
+- `bun run fmt` - Format code with Biome (auto-fix with prebuild hook)
 - `bun run build` - Build the action with @vercel/ncc (outputs to `dist/`)
 
 ### Release Process
@@ -27,15 +27,17 @@ This is a GitHub Action that monitors Claude Code execution logs and reports den
 ### Core Components
 
 **Entry Point** (`src/main.ts`):
-- Reads GitHub Action inputs: `github-token` and `claude-code-execution-file`
+- Reads GitHub Action inputs: `github-token`, `claude-code-execution-file`, `sticky-comment`, and `skip-comment`
 - Instantiates Action class with configuration
 - Handles errors and sets action failure status
+- Returns outputs: `report` (markdown report) and `denied-tools` (JSON list)
 
 **Action Logic** (`src/lib/action.ts`):
 - Main orchestrator that processes Claude Code execution logs
 - Extracts denied tool uses from SDK message logs
-- Creates or updates PR/Issue comments with denied tools report
+- Creates or updates PR/Issue comments with denied tools report (can be disabled with `skip-comment`)
 - Renders reports as collapsible markdown sections with tool details
+- Supports sticky comments mode to update existing comments across runs
 
 **GitHub API** (`src/lib/github.ts`):
 - Wrapper around GitHub's Octokit API
@@ -62,7 +64,6 @@ This is a GitHub Action that monitors Claude Code execution logs and reports den
 - `@actions/core` - GitHub Actions toolkit
 - `@actions/github` - GitHub API client
 - `@anthropic-ai/claude-code` - Claude Code SDK types
-- `nunjucks` - Template engine (installed but not currently used)
 
 ### Build System
 - Uses Bun as package manager and runtime
@@ -70,3 +71,9 @@ This is a GitHub Action that monitors Claude Code execution logs and reports den
 - Biome for linting and formatting
 - @vercel/ncc for bundling into single file
 - Husky for git hooks
+
+### GitHub Action Configuration
+- `github-token`: GitHub token for API access (defaults to `github.token`)
+- `claude-code-execution-file`: Path to Claude Code execution log file (required)
+- `sticky-comment`: Update existing comment instead of creating new ones (default: false)
+- `skip-comment`: Skip creating/updating PR/Issue comments (default: false)
