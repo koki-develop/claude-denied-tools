@@ -1,5 +1,5 @@
 {
-  "name": "ts-action-template",
+  "name": "claude-denied-tools",
   "main": "src/main.ts",
   "private": true,
   "type": "module",
