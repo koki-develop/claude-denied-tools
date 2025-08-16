@@ -40,13 +40,13 @@ export async function runAction(
     repo: github.context.repo.repo,
   });
 
-  const issueNumber = getIssueNumber(github.context);
+  const issueNumber = _getIssueNumber(github.context);
   core.info(`Issue/PR number: ${issueNumber}`);
 
-  const logs = readClaudeCodeExecutionFile(inputs.claudeCodeExecutionFile);
+  const logs = _readClaudeCodeExecutionFile(inputs.claudeCodeExecutionFile);
   core.info(`Read ${logs.length} SDK messages from execution file`);
 
-  const deniedTools = extractDeniedTools(logs);
+  const deniedTools = _extractDeniedTools(logs);
   core.info(`Found ${deniedTools.length} denied tool uses`);
   if (deniedTools.length > 0) {
     core.debug(
@@ -65,21 +65,21 @@ export async function runAction(
   // Skip comment creation if requested
   if (inputs.skipComment) {
     core.info("Skipping comment creation");
-    return { report: renderReports([report]), deniedTools };
+    return { report: _renderReports([report]), deniedTools };
   }
 
   if (inputs.stickyComment) {
     const comments = await gh.listIssueComments({ issueNumber });
-    const comment = await getLatestComment(comments);
+    const comment = await _getLatestComment(comments);
     if (comment) {
       core.info(`Found existing comment (ID: ${comment.id})`);
       // Update existing comment with new report
-      const reports = extractReports(comment);
+      const reports = _extractReports(comment);
       core.info(`Extracted ${reports.length} existing reports from comment`);
-      const rendered = renderReports([report, ...reports]);
+      const rendered = _renderReports([report, ...reports]);
       await gh.updateComment({
         commentId: comment.id,
-        body: rendered + commentFooter([report, ...reports]),
+        body: rendered + _commentFooter([report, ...reports]),
       });
       core.info(`Updated comment ${comment.id} with new report`);
       return { report: rendered, deniedTools };
@@ -88,15 +88,16 @@ export async function runAction(
   }
 
   // Create new comment
-  const rendered = renderReports([report]);
+  const rendered = _renderReports([report]);
   await gh.createComment({
     issueNumber: issueNumber,
-    body: rendered + commentFooter([report]),
+    body: rendered + _commentFooter([report]),
   });
   core.info(`Created new comment on issue/PR #${issueNumber}`);
   return { report: rendered, deniedTools };
 }
-function commentFooter(reports: Report[]) {
+
+export function _commentFooter(reports: Report[]) {
   const lines = [
     "",
     "",
@@ -106,7 +107,7 @@ function commentFooter(reports: Report[]) {
   return lines.join("\n");
 }
 
-function getIssueNumber(context: Context): number {
+export function _getIssueNumber(context: Context): number {
   switch (context.eventName) {
     case "pull_request":
     case "pull_request_review":
@@ -132,12 +133,12 @@ function getIssueNumber(context: Context): number {
   );
 }
 
-function readClaudeCodeExecutionFile(filePath: string): SDKMessage[] {
+export function _readClaudeCodeExecutionFile(filePath: string): SDKMessage[] {
   const content = fs.readFileSync(filePath, "utf-8");
   return JSON.parse(content);
 }
 
-function extractDeniedTools(logs: SDKMessage[]): ToolUse[] {
+export function _extractDeniedTools(logs: SDKMessage[]): ToolUse[] {
   const toolUses: Record<
     string,
     { name: string; input: Record<string, unknown> }
@@ -174,7 +175,9 @@ function extractDeniedTools(logs: SDKMessage[]): ToolUse[] {
   return deniedToolUseIds.map((id) => toolUses[id]);
 }
 
-async function getLatestComment(comments: Comment[]): Promise<Comment | null> {
+export async function _getLatestComment(
+  comments: Comment[],
+): Promise<Comment | null> {
   // Search in reverse order (from newest to oldest)
   for (const comment of comments.reverse()) {
     if (comment.body?.trim().endsWith("<!-- CLAUDE_DENIED_TOOLS -->")) {
@@ -185,7 +188,7 @@ async function getLatestComment(comments: Comment[]): Promise<Comment | null> {
   return null;
 }
 
-function extractReports(comment: Comment): Report[] {
+export function _extractReports(comment: Comment): Report[] {
   if (comment.body == null) {
     return [];
   }
@@ -213,7 +216,7 @@ function extractReports(comment: Comment): Report[] {
   }
 }
 
-function renderReports(reports: Report[]): string {
+export function _renderReports(reports: Report[]): string {
   const lines: string[] = [];
 
   // Header
