@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0](https://github.com/koki-develop/claude-denied-tools/compare/v0.0.1...v1.0.0) (2025-08-16)
+
+
+### Features
+
+* Release v1 ([65a72d0](https://github.com/koki-develop/claude-denied-tools/commit/65a72d03473dd060b26468170457414ec06ae456))
+
 ## 0.0.1 (2025-08-16)
 
 
