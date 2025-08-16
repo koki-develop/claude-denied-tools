@@ -67,7 +67,7 @@ export class Action {
         const reports = this._extractReports(comment);
         core.info(`Extracted ${reports.length} existing reports from comment`);
         const rendered = this._renderReports([report, ...reports]);
-        core.summary.addRaw(rendered, true);
+        core.summary.addRaw(rendered, true).write();
         await this._gh.updateComment({
           commentId: comment.id,
           body: rendered,
@@ -81,7 +81,7 @@ export class Action {
     // Create new comment
     const reports = [report];
     const rendered = this._renderReports(reports);
-    core.summary.addRaw(rendered, true);
+    core.summary.addRaw(rendered, true).write();
     await this._gh.createComment({
       issueNumber: issueNumber,
       body: rendered,
