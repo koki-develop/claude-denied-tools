@@ -237,7 +237,6 @@ export class Action {
       "The following tool executions that Claude Code attempted were blocked due to insufficient permissions.",
     );
     lines.push("Consider adding them to `allowed_tools` if needed.");
-    lines.push("");
 
     // Each report as collapsible section
     for (const report of reports) {
@@ -254,11 +253,16 @@ export class Action {
       const runUrl = `https://github.com/${owner}/${repo}/actions/runs/${report.runId}`;
       const toolCount = report.deniedTools.length;
       const toolText = toolCount === 1 ? "1 tool" : `${toolCount} tools`;
+      const summary = `Run <a href="${runUrl}">#${report.runId}</a> - ${toolText} denied`;
 
-      lines.push("<details>");
-      lines.push(
-        `<summary>Run <a href="${runUrl}">#${report.runId}</a> - ${toolText} denied</summary>`,
-      );
+      lines.push("");
+      if (reports.length > 1) {
+        lines.push("<details>");
+        lines.push(`<summary>${summary}</summary>`);
+      } else {
+        lines.push(summary);
+      }
+
       lines.push("");
       lines.push("| Tool | Input |");
       lines.push("| --- | --- |");
@@ -272,12 +276,14 @@ export class Action {
         lines.push(`| \`${tool.name}\` | \`${escapedInput}\` |`);
       }
 
-      lines.push("");
-      lines.push("</details>");
-      lines.push("");
+      if (reports.length > 1) {
+        lines.push("");
+        lines.push("</details>");
+      }
     }
 
     // Metadata for future parsing
+    lines.push("");
     lines.push(`<!-- ${JSON.stringify(reports)} -->`);
     lines.push("<!-- CLAUDE_DENIED_TOOLS -->");
 
