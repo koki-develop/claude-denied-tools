@@ -65,7 +65,7 @@ export async function runAction(
   // Skip comment creation if requested
   if (inputs.skipComment) {
     core.info("Skipping comment creation");
-    return { report: _renderReports([report]), deniedTools };
+    return { report: _renderReports(github.context, [report]), deniedTools };
   }
 
   if (inputs.stickyComment) {
@@ -76,7 +76,7 @@ export async function runAction(
       // Update existing comment with new report
       const reports = _extractReports(comment);
       core.info(`Extracted ${reports.length} existing reports from comment`);
-      const rendered = _renderReports([report, ...reports]);
+      const rendered = _renderReports(github.context, [report, ...reports]);
       await gh.updateComment({
         commentId: comment.id,
         body: rendered + _commentFooter([report, ...reports]),
@@ -88,7 +88,7 @@ export async function runAction(
   }
 
   // Create new comment
-  const rendered = _renderReports([report]);
+  const rendered = _renderReports(github.context, [report]);
   await gh.createComment({
     issueNumber: issueNumber,
     body: rendered + _commentFooter([report]),
@@ -216,7 +216,7 @@ export function _extractReports(comment: Comment): Report[] {
   }
 }
 
-export function _renderReports(reports: Report[]): string {
+export function _renderReports(context: Context, reports: Report[]): string {
   const lines: string[] = [];
 
   // Header
@@ -229,11 +229,7 @@ export function _renderReports(reports: Report[]): string {
 
   // Each report as collapsible section
   for (const report of reports) {
-    if (report.deniedTools.length === 0) {
-      continue;
-    }
-
-    const runUrl = `https://github.com/${github.context.repo.owner}/${github.context.repo.repo}/actions/runs/${report.runId}`;
+    const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${report.runId}`;
     const toolText =
       report.deniedTools.length === 1
         ? "1 tool"
