@@ -4,21 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
+### Setup
+- `bun install --frozen-lockfile` - Install dependencies with lock file
+
 ### Development
-- `bun install` - Install dependencies
-- `bun run test` - Run tests with Vitest
+- `bun run test` - Run all tests with Vitest
+- `bun run test src/lib/action.spec.ts` - Run a specific test file
 - `bun run lint` - Check code with Biome linter
-- `bun run fmt` - Format code with Biome (auto-fix with prebuild hook)
+- `bun run fmt` - Format code with Biome (automatically runs before build)
 - `bun run build` - Build the action with @vercel/ncc (outputs to `dist/`)
 
 ### Release Process
-1. Build the action: `bun run build`
-2. Add dist files: `git add dist/index.js dist/index.js.map dist/licenses.txt`
-3. Commit changes: `git commit -m "Build"`
-4. Trigger release workflow:
-   - Patch: `gh workflow run release.yml -f level=patch`
-   - Minor: `gh workflow run release.yml -f level=minor`
-   - Major: `gh workflow run release.yml -f level=major`
+Releases are managed automatically via release-please workflow when changes are pushed to main branch.
+- The workflow creates release PRs automatically
+- Merging a release PR triggers a new release
+- Major version tags are synchronized automatically after release
 
 ## Architecture
 
