@@ -17,7 +17,7 @@
   "dependencies": {
     "@actions/core": "1.11.1",
     "@actions/github": "6.0.1",
-    "@anthropic-ai/claude-code": "1.0.80"
+    "@anthropic-ai/claude-code": "1.0.98"
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.4",
