@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/koki-develop/claude-denied-tools/compare/v1.1.1...v1.1.2) (2025-09-08)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @anthropic-ai/claude-code to v1.0.87 [security] ([#16](https://github.com/koki-develop/claude-denied-tools/issues/16)) ([dbee138](https://github.com/koki-develop/claude-denied-tools/commit/dbee1381ae359aa8b503e7609b628ff725ff7d08))
+
 ## [1.1.1](https://github.com/koki-develop/claude-denied-tools/compare/v1.1.0...v1.1.1) (2025-08-16)
 
 
