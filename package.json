@@ -20,7 +20,7 @@
     "@anthropic-ai/claude-code": "1.0.80"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.1.4",
+    "@biomejs/biome": "2.2.3",
     "@types/node": "20.19.10",
     "@types/nunjucks": "3.2.6",
     "@vercel/ncc": "0.38.3",
