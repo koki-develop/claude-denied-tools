@@ -21,7 +21,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.2.3",
-    "@types/node": "20.19.24",
+    "@types/node": "20.19.25",
     "@types/nunjucks": "3.2.6",
     "@vercel/ncc": "0.38.4",
     "husky": "9.1.7",
