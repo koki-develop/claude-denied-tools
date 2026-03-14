@@ -42,7 +42,13 @@ export async function runAction(
   });
 
   const issueNumber = _getIssueNumber(github.context);
-  core.info(`Issue/PR number: ${issueNumber}`);
+  if (issueNumber != null) {
+    core.info(`Issue/PR number: ${issueNumber}`);
+  } else {
+    core.info(
+      `No Issue/PR number found for event: ${github.context.eventName}. Skipping comment.`,
+    );
+  }
 
   const logs = _readClaudeCodeExecutionFile(inputs.claudeCodeExecutionFile);
   core.info(`Read ${logs.length} SDK messages from execution file`);
@@ -67,9 +73,13 @@ export async function runAction(
     deniedTools,
   };
 
-  // Skip comment creation if requested
-  if (inputs.skipComment) {
-    core.info("Skipping comment creation");
+  // Skip comment creation if not in a PR/Issue context or if requested
+  if (inputs.skipComment || issueNumber == null) {
+    if (issueNumber == null) {
+      core.info("Not in a PR/Issue context. Skipping comment.");
+    } else {
+      core.info("Skipping comment creation");
+    }
     return {
       report: _renderReports(github.context, [report]),
       deniedTools,
@@ -116,12 +126,11 @@ export function _commentFooter(reports: Report[]) {
   return lines.join("\n");
 }
 
-export function _getIssueNumber(context: Context): number {
+export function _getIssueNumber(context: Context): number | null {
   switch (context.eventName) {
     case "pull_request":
     case "pull_request_review":
     case "pull_request_review_comment":
-      // For PR events, use payload.pull_request?.number
       if (context.payload.pull_request?.number) {
         return context.payload.pull_request.number;
       }
@@ -129,17 +138,13 @@ export function _getIssueNumber(context: Context): number {
 
     case "issue_comment":
     case "issues":
-      // For Issue or Issue comment events, use payload.issue?.number
-      // Note: issue_comment uses the same property for both PR comments and Issue comments
       if (context.payload.issue?.number) {
         return context.payload.issue.number;
       }
       break;
   }
 
-  throw new Error(
-    `Unable to get PR/Issue number from event: ${context.eventName}`,
-  );
+  return null;
 }
 
 export function _readClaudeCodeExecutionFile(filePath: string): SDKMessage[] {
