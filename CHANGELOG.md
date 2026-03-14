@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/koki-develop/claude-denied-tools/compare/v1.1.3...v1.2.0) (2026-03-14)
+
+
+### Features
+
+* allow action to run on non-PR/Issue events ([254c0be](https://github.com/koki-develop/claude-denied-tools/commit/254c0be6e00bac22ed8072c271beac0819626a2c))
+
 ## [1.1.3](https://github.com/koki-develop/claude-denied-tools/compare/v1.1.2...v1.1.3) (2025-11-14)
 
 
